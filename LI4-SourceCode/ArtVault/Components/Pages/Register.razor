@@ -1,0 +1,240 @@
+﻿@page "/register"
+@inject NavigationManager NavManager
+@inject IArtVaultFacade IAVFacade;
+
+<style>
+     body {
+         font-family: Arial, sans-serif;
+         background-color: #f4f4f4;
+     }
+
+     .login-container {
+         background-color: #ffffff;
+         padding: 20px;
+         border-radius: 8px;
+         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+         position: relative;
+         max-width: 800px;
+         width: 100%;
+     }
+
+         .login-container h2 {
+             text-align: center;
+         }
+
+     .form-grid {
+         display: grid;
+         grid-template-columns: repeat(2, 1fr);
+         gap: 16px;
+     }
+
+     .login-container label {
+         margin-bottom: 8px;
+         display: block;
+     }
+
+     .login-container input {
+         padding: 8px;
+         margin-bottom: 16px;
+         width: 100%;
+         box-sizing: border-box;
+     }
+
+     .button-container {
+         display: flex;
+         justify-content:space-evenly;
+         margin-top: 25px;
+     }
+
+     .login-container button {
+         background-color: #305673;
+         color: #fff;
+         padding: 10px;
+         border: none;
+         border-radius: 4px;
+         cursor: pointer;
+         font-size: 16px;
+     }
+
+         .login-container button:hover {
+             background-color: #25445c;
+         }
+
+     #tipoConta {
+        padding: 8px;
+        margin-bottom: 16px;
+        width: 100%;
+        box-sizing: border-box;
+     }
+
+       #tipoConta option{
+            padding: 8px;
+            margin-bottom: 16px;
+            width: 100%;
+            box-sizing: border-box;
+       }
+
+     .error-message {
+         color: red;
+     }
+</style>
+
+<div class="login-container">
+    <h2>Registar</h2>
+    <form class="form-grid">
+        <label for="username">
+            Nome de Usuário:
+            <input type="text" id="username" name="username" @bind="Username" required>
+        </label>
+
+        <label for="email">
+            Email:
+            <input type="text" id="email" name="email" @bind="Email" required>
+        </label>
+
+        <label for="password">
+            Palavra-passe:
+            <input type="password" id="password" name="password" @bind="Password" required>
+        </label>
+
+        <label for="confirmPassword">
+            Confirmar Palavra-passe:
+            <input type="password" id="confirmPassword" name="confirmPassword" @bind="ConfirmPassword" required>
+        </label>
+
+        <label for="nome">
+            Nome:
+            <input type="text" id="nome" name="nome" @bind="Nome" required>
+        </label>
+
+        <label for="morada">
+            Morada:
+            <input type="text" id="morada" name="morada" @bind="Morada" required>
+        </label>
+
+        <label for="NIF">
+            NIF:
+            <input type="text" id="NIF" name="NIF" @bind="NIF" required>
+        </label>
+
+        <label for="CC">
+            CC:
+            <input type="text" id="CC" name="CC" @bind="CC" required>
+        </label>
+
+        <label for="tipoConta">
+            Tipo de Conta:
+            <select id="tipoConta" name="tipoConta" @bind="TipoConta" required>
+                <option value="Comprador">Padrão</option>
+                <option value="Vendedor">Artista</option>
+            </select>
+        </label>
+
+        <div class="button-container">
+            <button type="button" @onclick="RegisterUser">Registar</button>
+            <button type="button" @onclick="GoToLogin">Voltar para Iniciar Sessão</button>
+        </div>
+
+        @foreach (var error in ErrorMessage)
+        {
+            <div class="error-message">@error</div>
+        }
+    </form>
+</div>
+
+
+
+
+@code {
+    @using Business
+    private string Username { get; set; }
+    private string Email { get; set; }
+    private string Password { get; set; }
+    private string ConfirmPassword { get; set; }
+    private string Nome { get; set; }
+    private string Morada { get; set; }
+    private string NIF { get; set; }
+    private string CC { get; set; }
+    private string TipoConta { get; set; }
+    private List<string> ErrorMessage = new();
+
+
+    private byte getTipoConta(string sTipo)
+    {
+        if (sTipo == "Comprador") return 1;
+        else if (sTipo == "Vendedor") return 2;
+        return 0;
+    }
+
+    private bool ValidateFields()
+    {
+        if (string.IsNullOrWhiteSpace(Username)){
+            ErrorMessage.Add("*Campo Obrigatório: Username");
+        }
+
+        if (string.IsNullOrWhiteSpace(Email))
+        {
+            ErrorMessage.Add("*Campo Obrigatório: Email");
+        }
+
+        if (string.IsNullOrWhiteSpace(Password))
+        {
+            ErrorMessage.Add("*Campo Obrigatório: Password");
+        }
+
+        if(Password != ConfirmPassword)
+        {
+            ErrorMessage.Add("A Password e a confirmação não são iguais");
+        }
+
+        if (string.IsNullOrWhiteSpace(Nome))
+        {
+            ErrorMessage.Add("*Campo Obrigatório: Nome");
+        }
+
+        if (string.IsNullOrWhiteSpace(Morada))
+        {
+            ErrorMessage.Add("*Campo Obrigatório: Morada");
+        }
+
+        if (string.IsNullOrWhiteSpace(NIF) || NIF.Length != 9)
+        {
+            ErrorMessage.Add("*Campo Obrigatório: NIF");
+        }
+
+        if (string.IsNullOrWhiteSpace(CC) || CC.Length !=  9)
+        {
+            ErrorMessage.Add("*Campo Obrigatório: CC");
+        }
+
+        if(ErrorMessage.Count > 0)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+
+    private void RegisterUser()
+    {
+        ErrorMessage.Clear();
+        if(ValidateFields()){
+        bool result = IAVFacade.TryRegisto(Email,Password,Username,Nome,Morada,int.Parse( NIF),int.Parse( CC),getTipoConta(TipoConta));
+        
+        if(result)
+        NavManager.NavigateTo("/login");
+        else{
+            
+                ErrorMessage.Add("Registo Falhou. Verifique as suas informaçoes e tente novamente.");
+            }
+        
+        }
+    }
+
+    private void GoToLogin()
+    {
+        NavManager.NavigateTo("/login");
+    }
+    
+}

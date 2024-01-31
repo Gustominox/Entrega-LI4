@@ -1,0 +1,105 @@
+﻿@page "/login"
+@inject NavigationManager NavManager
+@inject IArtVaultFacade IAVFacade
+
+<style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+    }
+
+    .login-container {
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column; 
+        justify-content: center;
+        align-items: center;
+        width: 25vw; 
+    }
+
+    .login-container label {
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .login-container input {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 16px;
+      box-sizing: border-box;
+    }
+
+    .button-container {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 5px;
+    }
+
+
+
+    .login-container button {
+            background-color: #305673;
+      color: #fff;
+      padding: 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 0 auto;
+       
+    }   
+
+    .login-container button:hover {
+                background-color: #25445c;
+    }
+
+  </style>
+
+<div class="login-container">
+  <h2>Iniciar Sessão</h2>
+  <form>
+    <label for="username">Email:</label>
+        <input type="text" id="username" name="username" @bind="Username"  required>
+
+    <label for="password">Palavra-passe:</label>
+        <input type="password" id="password" name="password" @bind="Password" required>
+        <div class="button-container">
+            <button type="button" @onclick="SubmitForm" >Iniciar Sessão</button>
+            <button type="button" @onclick="Register" >Registar</button>
+        </div>
+       
+        @if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <div class="error-message">@ErrorMessage</div>
+        }
+    
+    </form>
+</div>
+
+@code {
+    @using Business
+    private string Username { get; set; }
+    private string Password { get; set; }
+    private string ErrorMessage { get; set; }
+
+    private async void SubmitForm()
+    {
+        bool isValid =  await IAVFacade.CheckCredentialsAsync(Username, Password);
+        if (isValid)
+        {
+            NavManager.NavigateTo("/");
+        }
+        else
+        {
+            ErrorMessage = "Invalid credentials. Please try again.";
+        }
+    }
+
+    private void Register()
+    {
+        NavManager.NavigateTo("/register");
+    }
+}

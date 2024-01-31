@@ -1,0 +1,53 @@
+﻿@page "/watchlist"
+@using ArtVault.Business
+@using ArtVault.Components.Layout
+@inject NavigationManager NavManager
+@inject IArtVaultFacade IAVFacade
+
+<style>
+
+
+    .leilao-grid-container {
+        width: 1000px;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, 300px); /* Adjust column width as needed */
+        column-gap: 220px;
+        row-gap: 20px;
+    }
+
+</style>
+
+<PageTitle>artVault</PageTitle>
+
+<div class="leilao-grid-container">
+    @if (LeiloesList != null)
+    {
+        @foreach (Leilao l in LeiloesList)
+        {
+            <LeilaoComponent LeilaoInstance="@l" />
+        }
+    }
+    else
+    {
+        <div class="loading-spinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private List<Leilao> LeiloesList;
+
+    private async Task GetLeiloes()
+    {
+        await Task.Delay(2000);
+        LeiloesList = await IAVFacade.GetLeiloesWLAsync();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetLeiloes();
+    }
+}

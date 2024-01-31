@@ -1,0 +1,293 @@
+﻿@page "/leilao/{id}"
+@using ArtVault.Business
+@using ArtVault.Components.Layout
+
+@inject NavigationManager NavManager
+@inject IArtVaultFacade IAVFacade
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+    }
+
+    .leilao-container {
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        position: relative;
+        max-width: 1600px;
+        height: 700px;
+        width: 80%;
+    }
+
+    .login-container h2 {
+        text-align: center;
+    }
+
+    .leilao-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 64px;
+    }
+
+    .leilao-details {
+        margin: 0;
+    }
+
+    .image-container {
+        width: 300px;
+        height: 300px;
+        margin-bottom: 10px;
+        object-fit: contain;
+    }
+
+        .image-container img {
+            max-width: 300px;
+            max-height: 300px;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+        }
+
+    .login-container label {
+        display: block;
+        margin-bottom: 8px;
+    }
+
+    .leilao-details input {
+        padding: 8px;
+        margin-bottom: 16px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .leilao-details select {
+        padding: 11px;
+        box-sizing: border-box;
+    }
+
+    .button-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 50px;
+        margin-right: 50px;
+        position: absolute;
+        bottom: 0;
+        right: 0;
+    }
+
+        .button-container button {
+            background-color: #305673;
+            color: #fff;
+            padding: 10px;
+            border: none;
+            margin-right: 15px;
+            margin-left: 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+            .button-container button:hover {
+                background-color: #25445c;
+            }
+
+    .bid-history-list {
+        font-size:14px;
+        list-style: none;
+        padding: 0;
+    }
+
+    .bid-history-item {
+        border-bottom: 1px solid #ddd;
+        padding: 10px;
+        margin-bottom: 5px;
+    }
+
+        .bid-history-item strong {
+            color: #305673;
+        }
+
+        .bid-history-item em {
+            color: #888;
+        }
+
+    .leilao-image-container {
+        position: relative;
+        overflow: hidden;
+        height: 350px;
+        width:350px;    
+        border-radius: 8px;
+        margin-bottom: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.25);
+    }
+
+    .leilao-image {
+        width: 100%;
+        height: auto;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+    .scaleA {
+        width: 100%;
+        max-width: max-content;
+    }
+
+    .error-message {
+        color: red;
+    }
+
+</style>
+
+@if (LeilaoInstance != null)
+{
+    <div class="leilao-container">
+        <h1 style="margin-bottom:30px">Leilão de: <i>"@LeilaoInstance.GetNome()"</i></h1>
+        <form class="leilao-grid">
+
+            <div class="leilao-details">
+                  <div class="leilao-image-container">
+                        <img class="leilao-image scaleA" src=@imageDataUrl alt="Imagem do Leilão" />
+                    </div>
+            </div>
+
+            <div class="leilao-details" style="width: 300px;">
+                <h3>Informações da Obra</h3>
+                <br />
+                <p><strong>&emsp;Artist:</strong> @NomeArtista </p>
+                <p><strong>&emsp;Tipo:</strong> @(LeilaoInstance.GetTipo() == 1 ? "Inglês" : "Sealed Bid    ")</p>
+                <p><strong>&emsp;Dimensões:</strong> @LeilaoInstance.GetDimensoes()</p>
+                @if (LeilaoInstance.GetTipo() == 1)
+                {
+                    <p><strong>&emsp;Bid Atual:</strong> @LeilaoInstance.GetPrecoReferencia()</p>
+
+                }
+                <p><strong>&emsp;Tempo Restante: </strong> <br /> </p>
+                <p>&emsp;&emsp;@LeilaoInstance.GetTempoRestante()</p>
+                <p><strong>Descrição:</strong><br/> @LeilaoInstance.GetDescricao()</p>
+                
+
+
+                @if (!string.IsNullOrEmpty(errors))
+                {
+                    <div class="error-message">@errors</div>
+                }
+
+            </div>
+
+
+           
+            @if(LeilaoInstance.GetTipo() == 1){
+                <div class="leilao-details" style="width:200px">
+                    <h4>Bid History</h4>
+                    @if (BidHistory != null && BidHistory.Any())
+                    {
+                        <ul class="bid-history-list">
+                            @foreach (var bid in BidHistory)
+                            {
+                                <li class="bid-history-item">
+                                    <strong>@IAVFacade.GetNomeArtista(bid.GetIdUtilizador())</strong> licitou <strong>@bid.GetValor()</strong> em <em>@bid.GetDataHora()</em>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p>No bid history available.</p>
+                    }
+                </div>
+
+            }
+            <div class="leilao-details" style="width:5px;">
+                <div class="button-container">
+                    @if (int.Parse(IAVFacade.GetUserAtualId()) == LeilaoInstance.GetIdUtilizador())
+                    {
+                        <button @onclick="CancelarLeilao">Cancelar</button>
+                    }
+                    else
+                    {
+                        <label for="bidAmount">Bid Amount:</label>
+                        <input type="number" style="width:200px;margin-top:15px;margin-left:10px;" id="bidAmount" @bind="bidAmount" />
+
+                        <button @onclick="PlaceBid">Place Bid</button>
+
+                    }
+
+                </div>
+            </div>
+        </form>
+    </div>
+}
+else
+{
+    <p style="font-size:25px"><strong>Ups!! Leilão não existe!</strong></p>
+}
+@code {
+    [Parameter]
+    public string id { get; set; }
+
+    private Leilao LeilaoInstance;
+    private int bidAmount;
+    private List<Lance> BidHistory;
+    private byte[] imageData;
+    private string imageDataUrl;
+    private string NomeArtista;
+    private string errors;
+
+    protected override async Task OnInitializedAsync()
+    {
+        int idInt=int.Parse(id);
+        LeilaoInstance = IAVFacade.GetLeilaoWithID(idInt);
+        if (LeilaoInstance!=null)
+        {
+
+            IAVFacade.SetLeilaoAtual(LeilaoInstance);
+
+            NomeArtista = IAVFacade.GetNomeArtista(LeilaoInstance.GetIdUtilizador());
+
+            BidHistory = await IAVFacade.GetXLancesByLeilaoIDAsync(idInt, 6);
+
+            imageData = await FetchImageData();
+            string imageFormat = LeilaoInstance.GetImagem().EndsWith(".png", StringComparison.OrdinalIgnoreCase) ? "png" : "jpeg";
+
+            imageDataUrl = $"data:image/{imageFormat};base64,{Convert.ToBase64String(imageData)}";
+
+        }
+    }
+
+    private async void PlaceBid()
+    {
+        errors = null;
+        bool result = IAVFacade.TryLance(LeilaoInstance.GetId(),bidAmount);
+
+        if (result)
+        {
+            int idInt = int.Parse(id);
+            LeilaoInstance = IAVFacade.GetLeilaoWithID(idInt);
+
+            BidHistory = await IAVFacade.GetXLancesByLeilaoIDAsync(idInt, 6);
+        }
+        else errors = "A bid é demasiado pequena";
+    }
+    private void CancelarLeilao()
+    {
+        int idInt = int.Parse(id);
+        IAVFacade.CancelarLeilao(idInt);
+        NavManager.NavigateTo("");
+
+    }
+
+    private async Task<byte[]> FetchImageData()
+    {
+        byte[] imagem = await IAVFacade.GetImg(LeilaoInstance.GetImagem());
+
+    return imagem;
+    }
+    
+
+}

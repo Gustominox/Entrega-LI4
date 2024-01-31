@@ -1,0 +1,20 @@
+﻿@using Business
+@inherits LayoutComponentBase
+@inject IArtVaultFacade IAVFacade
+
+<PageTitle>ArtVault</PageTitle>
+
+<div class="page d-flex flex-column">
+    <div class="container-fluid bg-grey">
+        <TopNavBar UtilizadorInstance=IAVFacade.GetUserAtual()/>
+    </div>
+    <div class="container-fluid flex-grow-1 page-body">
+        @Body
+    </div>
+    
+
+    <div class="clear"></div>
+    <footer class="fixed-bottom text-center d-flex align-items-center justify-content-center footer">
+        <p class="mb-0 py-2"><strong>Projeto LI4</strong> - 2023/2024</p>
+    </footer>
+</div>

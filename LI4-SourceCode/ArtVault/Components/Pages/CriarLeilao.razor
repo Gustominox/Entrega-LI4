@@ -1,0 +1,364 @@
+﻿@page "/criarleilao"
+@inject NavigationManager NavManager;
+@inject IArtVaultFacade IAVFacade;
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+    }
+
+    .leilao-container {
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        position: relative;
+        max-width: 1600px;
+        height: 650px;
+        width: 100%;
+    }
+
+        .login-container h2 {
+            text-align: center;
+        }
+
+    .leilao-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 64px;
+    }
+
+    .leilao-details {
+        margin: 0;
+    }
+
+    .image-container{
+        width:300px;
+        height:300px;
+        margin-bottom: 10px ;
+        object-fit: contain;
+    }
+
+        .image-container img {
+            max-width: 300px; /* Maximum width */
+            max-height: 300px; /* Maximum height */
+            width: auto; /* Width is automatically adjusted */
+            height: auto; /* Height is automatically adjusted */
+            object-fit: contain; /* Image will be scaled to maintain its aspect ratio */
+        }
+
+    .login-container label {
+        display: block;
+        margin-bottom: 8px;
+    }
+
+    .leilao-details input {
+        padding: 8px;
+        margin-bottom: 16px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .leilao-details select{
+        padding: 11px;
+        box-sizing: border-box;
+    }
+
+    .button-container {
+        display: flex;
+        justify-content: space-evenly;
+        margin-bottom: 50px;
+        margin-right: 50px;
+        position:absolute;
+        bottom: 0;
+        right: 0;
+    }
+
+    .button-container button {
+        background-color: #305673;
+        color: #fff;
+        padding: 10px;
+        border: none;
+        margin-right: 15px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+    }
+
+        .button-container button:hover {
+            background-color: #25445c;
+        }
+
+    textarea {
+        width: 229%; /* Make it fill the container */
+        height: 150px; /* Adjust height as needed */
+        padding: 10px; /* Padding inside the textarea */
+        box-sizing: border-box; /* Include padding and border in the width and height */
+        border: 1px solid #ccc; /* Border style */
+        border-radius: 4px; /* Rounded corners */
+        font-size: 16px; /* Font size */
+        grid-column: 2 / 4;
+    }
+
+    #tipoLeilao {
+        padding: 8px;
+        margin-bottom: 16px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .error-message {
+        color: red;
+    }
+
+    
+</style>
+
+<div class="leilao-container">
+    <h2>Criar Leilão</h2>
+    <form class="leilao-grid">
+        <div class="leilao-details">
+        <label for="imagem">
+            <div class="image-container">
+                <img src="@imagePreview" width="300px" alt="Insira a sua imagem"/>
+            </div>
+            <InputFile OnChange="@LoadFile" accept="image/*" />
+      
+        </label>
+
+            @foreach(var error in errors)
+            {
+                <div class="error-message">@error</div>
+            }
+        </div>
+        
+        <div class="leilao-details"> 
+        <label for="nome">
+            Nome:
+            <input type="text" id="nome" name="nome" @bind="Nome" required>
+        </label>
+
+        <label for="dimensoes">
+            Dimensões (cm):
+            <input type="text" id="dimensoes" name="nome" @bind="Dimensoes" required>
+        </label>
+
+        <label for="precores">
+            Preço Reserva:
+            <input type="number" id="precores" name="precores" min="1" @bind="PrecoRes" required>
+        </label>
+
+        @if (ShowPrecoIni)
+        {
+            <label for="precoini">
+                Preço Inicial:
+
+            <input type="number" id="precoini" name="prcoini" min="1" @bind="PrecoIni">
+            </label>
+        }
+
+        <label for="descricao">
+            Description:
+            <textarea id="descricao" name="descricai" rows="4" @bind="Descricao" style="grid-column: 2/5">Escreva uma Descrição da Arte</textarea>
+        </label>
+
+        </div>
+        
+
+    
+
+
+        <div class="leilao-details">
+        <label for="tipoLeilao">
+            Tipo de Leilão:
+                <select id="tipoLeilao" name="tipoLeilao" @bind="TipoLeilao" required style="padding: 11px;
+        margin-bottom: 16px;
+        width: 100%;
+        box-sizing: border-box;">
+                    <option value="1" @onclick="StateHasChanged">Leilão Inglês</option>
+                    <option value="2" @onclick=" StateHasChanged">Leilão Sealed-Bid</option>
+            </select>
+        </label>
+
+        </div>
+
+        <div class="leilao-details">
+        <label for="datafim">
+            Data Final:
+                <input type="date" @bind="DataFim">
+        </label>
+        </div>
+
+        <div class="leilao-details">
+        <label for="hora">
+            Hora Final:
+            <br />
+            <select id="hora" name="hora" @bind="Hora" >
+                @for (int i = 0; i <= 23; i++)
+                {
+                        <option value="@i">@i.ToString("00")</option>
+                }
+            </select>
+            h
+            <select id="min" name="min" @bind="Min">
+                @for (int j = 0; j <= 59; j++)
+                {
+                        <option value="@j">@j.ToString("00")</option>
+                }
+            </select>
+            m
+                <div class="button-container">
+                    <button type="button" @onclick="Criarleilao">Criar Leilão</button>
+                    <button type="button" @onclick="Voltar">Voltar para Home</button>
+                </div>
+            </label>
+        </div>
+
+    </form>
+
+</div>
+
+@code {
+    @using Business
+    private string imageName { get; set; }
+    private byte[] image { get; set; }
+    private string Nome{ get; set; }
+    private string Dimensoes{ get; set; }
+    private int PrecoRes{ get; set; }
+    private int PrecoIni{ get; set; }
+    private int TipoLeilao{ get; set; }
+    private string Descricao{ get; set; }
+    private DateTime DataFim { get; set; } = DateTime.Now;
+    private int Hora { get; set; }
+    private int Min { get; set; }
+    private long maxFileSize = 1024 * 50;
+    private List<string> errors = new ();
+    private bool ShowPrecoIni => TipoLeilao == 1;
+    private string imagePreview = "/imgs/insert_image.png";
+
+
+
+    private async Task LoadFile (InputFileChangeEventArgs e)
+    {
+        errors.Clear();
+        var file = e.File;
+
+        if (file != null)
+        {
+            if (file.Size > maxFileSize)
+            {
+                errors.Add("The file is too large. Please upload a file smaller than 50 kB.");
+                return;
+            }
+
+            try
+            {
+                var stream = file.OpenReadStream();
+                var buffer = new byte[file.Size];
+                await stream.ReadAsync(buffer);
+                var mimeType = file.ContentType;
+                string extensaoDoArquivo = Path.GetExtension(file.Name);
+                imageName = IAVFacade.GetUserAtualId() + extensaoDoArquivo;
+                Console.WriteLine(mimeType);
+                imagePreview = $"data:{mimeType};base64,{Convert.ToBase64String(buffer)}";
+                StateHasChanged();
+                image = await ConvertToByteArray(file);
+            }
+            catch (Exception ex)
+            {
+                errors.Add("An error occurred while uploading the file.");
+            }
+        }
+    }
+
+    private async Task<byte[]> ConvertToByteArray(IBrowserFile file)
+    {
+        using var memoryStream = new MemoryStream();
+        await file.OpenReadStream().CopyToAsync(memoryStream);
+        return memoryStream.ToArray();
+    }
+
+    private bool ValidateFields()
+    {
+
+        if (string.IsNullOrWhiteSpace(Nome))
+        {
+            errors.Add("*Campo Obrigatório: Nome");
+        }
+
+        if (string.IsNullOrWhiteSpace(Dimensoes))
+        {
+            errors.Add("*Campo Obrigatório: Dimensões");
+        }
+
+
+        if (image == null || image.Length == 0 || string.IsNullOrWhiteSpace(imageName))
+        {
+            errors.Add("*Campo Obrigatório: Imagem");
+        }
+
+        if (PrecoRes <= 1)
+        {
+            errors.Add("*Campo Obrigatório: Preço de reserva");
+        }
+        if(TipoLeilao == 1)
+        {
+            if(PrecoIni <= 1)
+            {
+                errors.Add("*Campo Obrigatório: Preço de inicial");
+            }
+        }
+
+
+        if (TipoLeilao != 1 && TipoLeilao != 2)
+        {
+            errors.Add("*Campo Obrigatório: Tipo de leilão");
+
+        }
+
+        if (Hora < 0 || Hora > 23)
+        {
+            errors.Add("*Campo Obrigatório: Hora");
+        }
+
+        if (Min < 0 || Min > 59)
+        {
+            errors.Add("*Campo Obrigatório: Min");
+        }
+
+
+        DateTime combined = new DateTime(DataFim.Year, DataFim.Month, DataFim.Day, Hora, Min, 0);
+        if(combined < DateTime.Now)
+        {
+            errors.Add("A data inserida é inválida");
+        }
+
+        if(errors.Count > 0)
+        {
+            return false;
+        }
+        return true;
+    }
+
+
+
+    private void Criarleilao()
+    {
+        errors.Clear();
+        if (ValidateFields())
+        {
+            imageName = Nome + imageName;
+            DateTime combined = new DateTime(DataFim.Year, DataFim.Month, DataFim.Day, Hora, Min, 0);
+            IAVFacade.TryLeilao(Nome, TipoLeilao, PrecoRes, PrecoIni, imageName, Dimensoes, combined, Descricao, image);
+            NavManager.NavigateTo("");
+        }
+        
+    }
+
+    private void Voltar()
+    {
+        NavManager.NavigateTo("");
+    }
+}
+

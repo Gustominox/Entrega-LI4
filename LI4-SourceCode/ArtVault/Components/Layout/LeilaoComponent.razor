@@ -1,0 +1,165 @@
+﻿@using ArtVault.Business
+@inject NavigationManager NavManager
+<style>
+
+    .leilao-image-container {
+        position: relative;
+        overflow: hidden;
+        height:120px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.25);
+        cursor: pointer;
+    }
+
+    .leilao-image {
+        width: 100%;
+        height: auto;
+        position: absolute;
+        top: 50%;
+        transform: translate(0, -50%);
+    }
+
+    .leilao-container {
+        font-size: 10px;
+        width: 500px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .leilao-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+    }
+
+    .leilao-details {
+        margin: 0;
+    }
+
+        .leilao-details p {
+            margin-bottom: 8px;
+        }
+
+    .heart-button {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 24px;
+    }
+
+        
+
+    .scaleA {
+        width: 100%;
+        max-width: max-content;
+    }
+</style>
+
+<div class="leilao-container" >
+    <div class="leilao-grid">
+        <div class="leilao-image-container" @onclick="NavigateToLeilaoPage">
+                <img class="leilao-image scaleA" src=@imageDataUrl alt="Imagem do Leilão" />
+            </div>
+
+        <div class="leilao-details">
+            <p><strong>Artista: </strong> @IAVFacade.GetNomeArtista(LeilaoInstance.GetIdUtilizador()) </p>
+            <p><strong>Nome: </strong> @LeilaoInstance.GetNome()</p>
+            <p><strong>Tempo Restante: </strong> <br />@LeilaoInstance.GetTempoRestante()</p>
+            @if (LeilaoInstance.GetTipo() == 1)
+            {
+                <p><strong>Bid atual: </strong> @LeilaoInstance.GetPrecoReferencia()</p>
+            }
+            <p><strong>Tipo:</strong> @(LeilaoInstance.GetTipo() == 1 ? "Normal" : "Sealed")</p>
+        </div>
+
+        <div class="leilao-details">
+            <p><strong>Dimensões:</strong> @LeilaoInstance.GetDimensoes()</p>
+            <p><strong>Descrição:</strong><br /> @LeilaoInstance.GetDescricao()</p>
+        </div>
+    </div>
+
+    
+    <button class="heart-button" style="color: @heartColor" @onmouseover="OnMouseOver" @onmouseout="OnMouseOut" @onclick="AddToWatchlist">
+        <i class="fas fa-heart"></i>
+    </button>
+   
+</div>
+
+@code {
+    [Parameter]
+    public Leilao LeilaoInstance { get; set; }
+
+    [Inject]
+    public IArtVaultFacade IAVFacade { get; set; }
+
+    private string heartColor;
+    private byte[] imageData;
+    private string imageDataUrl;
+
+    protected override async Task OnInitializedAsync()
+    {
+        imageData = await FetchImageData();
+        string imageFormat = LeilaoInstance.GetImagem().EndsWith(".png", StringComparison.OrdinalIgnoreCase) ? "png" : "jpeg";
+
+        imageDataUrl = $"data:image/{imageFormat};base64,{Convert.ToBase64String(imageData)}";
+
+    }
+
+    protected override void  OnInitialized()
+    {
+
+        if(LeilaoInstance.GetInWL() == true)
+        {
+            heartColor = "red";
+        }
+        else
+        {
+            heartColor = "grey";
+        }
+    }
+
+    private async void AddToWatchlist()
+    {
+
+        if (!LeilaoInstance.GetInWL())
+        {
+            heartColor = "red";
+            LeilaoInstance.SetInWL(true);
+            await IAVFacade.AddLeilaoToWLAsync(LeilaoInstance.GetId());
+        }
+        else{
+            heartColor = "grey";
+            LeilaoInstance.SetInWL(false);
+
+            await IAVFacade.RemoveFromWLAsync(LeilaoInstance.GetId());
+        }
+
+    }
+    private void NavigateToLeilaoPage()
+    {
+        Console.WriteLine($"Going to /leilao/{LeilaoInstance.GetId()}");
+        NavManager.NavigateTo($"/leilao/{LeilaoInstance.GetId()}");
+    }
+
+    private void OnMouseOver()
+    {
+        if (!LeilaoInstance.GetInWL()) heartColor = "red";
+        else heartColor = "grey"; 
+    }
+
+    private void OnMouseOut()
+    {
+        if (!LeilaoInstance.GetInWL()) heartColor = "grey";
+        else heartColor = "red";
+    }
+    private async Task<byte[]> FetchImageData()
+    {
+        byte[] imagem = await IAVFacade.GetImg(LeilaoInstance.GetImagem());
+
+        return imagem;
+    }
+
+}

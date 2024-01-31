@@ -1,0 +1,100 @@
+﻿@using ArtVault.Business.Utilizadores
+@using ArtVault.Business
+@inject NavigationManager NavManager
+
+<style>
+    .user-container {
+        font-size: 10px;
+        width: 500px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .user-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+    }
+
+    .user-details {
+        margin: 0;
+    }
+
+        .user-details p {
+            margin-bottom: 4px;
+        }
+
+    .button-container {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 5px;
+    }
+
+
+
+    .button-container button {
+        background-color: #305673;
+        color: #fff;
+        height:60px;
+        padding: 5px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        margin: 0 auto;
+    }
+
+        .button-container button:hover {
+            background-color: #25445c;
+        }
+
+</style>
+
+<div class="user-container">
+    <div class="user-grid">
+        <div class="user-details">
+            <p><strong>ID: </strong>@ArtistaInstance.GetId()</p>
+            <p><strong>Username: </strong>@ArtistaInstance.GetUsername()</p>
+            <p><strong>Nome: </strong>@ArtistaInstance.GetNome()</p>
+            <p><strong>Email: </strong>@ArtistaInstance.GetEmail()</p>
+        </div>
+        <div class="user-details">
+            <p><strong>Morada: </strong>@ArtistaInstance.GetMorada()</p>
+            <p><strong>CC: </strong>@ArtistaInstance.GetCc()</p>
+            <p><strong>NIF: </strong>@ArtistaInstance.GetNif()</p>
+        </div>
+        @if (showButtons)
+        {
+            <div class="button-container">
+                <button type="button" @onclick="Aceitar">Aceitar</button>
+                <button type="button" @onclick="Rejeitar">Rejeitar</button>
+            </div>
+        }
+    </div>
+</div>
+
+
+@code {
+    [Parameter]
+    public Artista ArtistaInstance { get; set; }
+
+    [Inject]
+    public IArtVaultFacade IAVFacade { get; set; }
+
+    private bool showButtons = true;
+
+    public async Task Aceitar()
+    {
+        await IAVFacade.AceitarArtistaAsync(ArtistaInstance.GetId());
+        showButtons = false;
+
+    }
+
+    public async Task Rejeitar()
+    {
+        await IAVFacade.RejeitarArtistaAsync(ArtistaInstance.GetId());
+        showButtons = false;
+    }   
+}
